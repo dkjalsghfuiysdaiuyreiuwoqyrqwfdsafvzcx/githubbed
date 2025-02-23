@@ -1,3 +1,4 @@
+-- verison 1.1
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
@@ -78,9 +79,7 @@ Tab:CreateInput({
     end,
 })
 
-local Divider = Tab:CreateDivider()
-
--- Dropdown to display available Pastebins (populated after login)
+-- Create a dropdown for available pastes (initially empty)
 local pasteDropdown = Tab:CreateDropdown({
     Name = "Available Pastes",
     Options = {"Not Loaded"},
@@ -114,6 +113,10 @@ local function updatePasteDropdown(userKey)
     }
     
     local listResponse = http_request(listReq)
+    
+    -- Debug: Print the full response body
+    print("List Response Body:", listResponse.Body)
+    
     if not listResponse or not listResponse.Body then
         warn("Failed to retrieve paste list")
         return
@@ -122,21 +125,29 @@ local function updatePasteDropdown(userKey)
     local body = listResponse.Body
     local pasteTitles = {}
     
-    -- Basic XML parsing: extract contents between <paste_title>...</paste_title>
+    -- Debug: Track how many paste titles are found
+    local count = 0
     for title in body:gmatch("<paste_title>(.-)</paste_title>") do
+        print("Found paste title:", title)
         table.insert(pasteTitles, title)
+        count = count + 1
     end
+    print("Total paste titles found:", count)
     
     -- If no pastes were found, indicate that.
     if #pasteTitles == 0 then
         pasteTitles = {"No pastes found"}
     end
     
-    -- Update the dropdown options.
-    pasteDropdown:SetOptions(pasteTitles)
+    -- Update the dropdown options (ensure your Rayfield version supports SetOptions)
+    if pasteDropdown.SetOptions then
+        pasteDropdown:SetOptions(pasteTitles)
+    else
+        warn("SetOptions method not available on your dropdown!")
+    end
 end
 
--- Button to perform the House scan and upload, then update paste dropdown
+-- Button to perform the House scan, upload, and then update the dropdown
 Tab:CreateButton({
     Name = "Scan House",
     Callback = function()
