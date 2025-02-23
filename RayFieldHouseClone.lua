@@ -88,7 +88,7 @@ local pasteDropdown = Tab:CreateDropdown({
     end,
 })
 
--- Function to update the dropdown with paste titles from your account
+-- Function to update the dropdown with paste titles and URLs from your account
 local function updatePasteDropdown(userKey)
     local HttpService = game:GetService("HttpService")
     
@@ -123,25 +123,25 @@ local function updatePasteDropdown(userKey)
     end
 
     local body = listResponse.Body
-    local pasteTitles = {}
+    local pastes = {}
     
-    -- Debug: Track how many paste titles are found
-    local count = 0
-    for title in body:gmatch("<paste_title>(.-)</paste_title>") do
-        print("Found paste title:", title)
-        table.insert(pasteTitles, title)
-        count = count + 1
+    -- Parse each paste entry from the XML.
+    for pasteData in body:gmatch("<paste>(.-)</paste>") do
+        local title = pasteData:match("<paste_title>(.-)</paste_title>")
+        local url = pasteData:match("<paste_url>(.-)</paste_url>")
+        if title and url then
+            table.insert(pastes, title .. " - " .. url)
+        end
     end
-    print("Total paste titles found:", count)
-    
+
     -- If no pastes were found, indicate that.
-    if #pasteTitles == 0 then
-        pasteTitles = {"No pastes found"}
+    if #pastes == 0 then
+        pastes = {"No pastes found"}
     end
     
     -- Update the dropdown options (ensure your Rayfield version supports SetOptions)
     if pasteDropdown.SetOptions then
-        pasteDropdown:SetOptions(pasteTitles)
+        pasteDropdown:SetOptions(pastes)
     else
         warn("SetOptions method not available on your dropdown!")
     end
@@ -242,7 +242,7 @@ Tab:CreateButton({
             Image = 4483362458,
         })
         
-        -- Update the dropdown with the current list of pastes
+        -- Update the dropdown with the current list of pastes (including name and URL)
         updatePasteDropdown(userKey)
     end,
 })
